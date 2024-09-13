@@ -158,6 +158,8 @@ const UserPage = () => {
   };
 
   const getAllComments = async (userId: string) => {
+    console.log("function working");
+    
     try {
       const response = await fetch('/api/get-comments', {
         method: 'POST',
@@ -168,6 +170,8 @@ const UserPage = () => {
       });
   
       const result = await response.json();
+      console.log(result);
+      
       if (response.ok) {
         setComments(result.comments);
       } else {
