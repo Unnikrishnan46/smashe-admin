@@ -14,9 +14,7 @@ function Dashboard() {
     elections: 0,
     votes: 0,
   });
-  const [topFive,setTopFive] = useState<any[]>([]);
-
-
+  const [topFive, setTopFive] = useState<any[]>([]);
 
   // Get total users
   const getTotalUsers = async () => {
@@ -51,17 +49,38 @@ function Dashboard() {
     }
   };
 
-  // Get total votes
   const getTotalVotes = async () => {
     try {
-      const votesRef = ref(database, "/votes/");
+      const electionsRef = ref(database, "/elections/");
+      const electionsSnapshot = await get(electionsRef);
+      const electionsData = electionsSnapshot.val();
+      const activeElection = Object.values(electionsData).find(
+        (election: any) => election.isActive === true
+      ) as any;
+  
+      if (!activeElection) {
+        console.error("No active election found");
+        return;
+      }
+      const votesRef = ref(database, `/votes/${activeElection.id}`);
       const votesSnapshot = await get(votesRef);
       const votesData = votesSnapshot.val();
-      setTotalVotes(Object.keys(votesData).length);
+
+      if (votesData) {
+        const validVotes = Object.values(votesData).filter(
+          (vote: any) => vote.votedUserId && vote.voterId
+        );
+        console.log(validVotes.length);
+        
+        setTotalVotes(validVotes.length);
+      } else {
+        setTotalVotes(0);
+      }
     } catch (error) {
       console.error("Error fetching votes: ", error);
     }
   };
+  
 
   const calculatePercentageChange = (current: number, previous: number) => {
     if (previous === 0) return current > 0 ? 100 : 0; // Handle cases where there were no users last month
@@ -129,7 +148,7 @@ function Dashboard() {
       if (!votesData) return 0;
 
       const lastMonth = new Date();
-      lastMonth.setMonth(lastMonth.getMonth() - 1); 
+      lastMonth.setMonth(lastMonth.getMonth() - 1);
 
       const votesLastMonth = Object.values(votesData).filter((vote: any) => {
         const voteDate = new Date(vote.voteDate);
@@ -177,17 +196,17 @@ function Dashboard() {
       const electionsData = snapshot.val();
       const currentElectionsCount = Object.keys(electionsData).length;
 
-      const lastMonthElectionsCount = await getTotalElectionsLastMonth(); 
+      const lastMonthElectionsCount = await getTotalElectionsLastMonth();
 
       const electionChange = calculatePercentageChange(
         currentElectionsCount,
         lastMonthElectionsCount
       );
 
-      setTotalElections(currentElectionsCount); 
+      setTotalElections(currentElectionsCount);
       setPercentageChange((prev) => ({
         ...prev,
-        elections: electionChange, 
+        elections: electionChange,
       }));
     } catch (error) {
       console.error("Error fetching elections: ", error);
@@ -201,13 +220,11 @@ function Dashboard() {
       const votesData = snapshot.val();
       const currentVotesCount = Object.keys(votesData).length;
 
-      const lastMonthVotesCount = await getTotalVotesLastMonth(); 
+      const lastMonthVotesCount = await getTotalVotesLastMonth();
       const voteChange = calculatePercentageChange(
         currentVotesCount,
         lastMonthVotesCount
       );
-
-      setTotalVotes(currentVotesCount); 
       setPercentageChange((prev) => ({
         ...prev,
         votes: voteChange,
@@ -222,36 +239,45 @@ function Dashboard() {
       const usersRef = ref(database, "/users/");
       const usersSnapshot = await get(usersRef);
       const usersData = usersSnapshot.val();
-  
+
       if (!usersData) {
         return;
       }
 
-      const voteCounts: Record<string, { userId: string; votes: number; name: string; photoUrl: string; email:any }> = {};
+      const voteCounts: Record<
+        string,
+        {
+          userId: string;
+          votes: number;
+          name: string;
+          photoUrl: string;
+          email: any;
+        }
+      > = {};
       Object.keys(usersData).forEach((userId) => {
         const user = usersData[userId];
         voteCounts[userId] = {
           userId,
           votes: 0,
-          name: user.userName || "Unknown", 
-          photoUrl: user.photoUrl || "", 
-          email:user.email || "not given"
+          name: user.userName || "Unknown",
+          photoUrl: user.photoUrl || "",
+          email: user.email || "not given",
         };
       });
-  
+
       const electionsRef = ref(database, "/elections/");
       const electionsSnapshot = await get(electionsRef);
       const electionsData = electionsSnapshot.val();
-  
+
       if (!electionsData) {
         return;
       }
-  
+
       for (const electionId in electionsData) {
         const votesRef = ref(database, `/votes/${electionId}`);
         const votesSnapshot = await get(votesRef);
         const votesData = votesSnapshot.val();
-  
+
         if (votesData) {
           Object.values(votesData).forEach((vote: any) => {
             const votedUserId = vote?.votedUserId;
@@ -261,12 +287,12 @@ function Dashboard() {
           });
         }
       }
-  
+
       const usersWithVotes = Object.values(voteCounts);
       const topTenUsers = usersWithVotes
         .sort((a, b) => b.votes - a.votes)
         .slice(0, 10);
-  
+
       setTopFive(topTenUsers);
     } catch (error) {
       console.error("Error retrieving and calculating top 10 users:", error);

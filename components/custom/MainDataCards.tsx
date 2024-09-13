@@ -11,6 +11,8 @@ type props = {
 }
 
 function MainDataCards({totalUsers,totalVotes,totalElections,activeElection,percentageChange}:props) {
+  console.log("totalVotes   :  ",totalVotes);
+  
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
