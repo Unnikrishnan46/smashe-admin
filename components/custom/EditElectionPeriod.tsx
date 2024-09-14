@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,27 +11,53 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { votePeriodStore } from "@/store";
+import { editElectionStore } from "@/store";
 import { DatePicker } from "rsuite";
-import "./style.css";
 import { useToast } from "@/hooks/use-toast";
-import { v4 as uuidv4 } from "uuid";
-import { get, ref, set, update } from "firebase/database";
+import { ref, get, update } from "firebase/database";
 import { database } from "@/firebase/firebase.config";
-import { getCurrentDayDetails } from "@/utils/currentTime";
+import "./style.css";
 
-export function VotePeriodModal() {
-  const { isVotePeriodModalOpen, setIsVotePeriodModalOpen } = votePeriodStore();
+export function EditVotePeriodModal({ electionId }: { electionId: string }) {
+  const { isElectionEditModalOpen, setIsElectionEditModalOpen } = editElectionStore();
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     name: "",
     fromDate: new Date(),
-    toDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+    toDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000),
   });
-  const [isLoading,setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  console.log(formData);
+  
+  useEffect(() => {
+    // Fetch the existing election data by electionId
+    const fetchElectionData = async () => {
+      const electionRef = ref(database, `/elections/${electionId}`);
+      const snapshot = await get(electionRef);
+      const electionData = snapshot.val();
+
+      if (electionData) {
+        setFormData({
+          name: electionData.name || "",
+          fromDate: new Date(electionData.fromDate),
+          toDate: new Date(electionData.toDate),
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to fetch election data",
+          className: "bg-white",
+        });
+      }
+    };
+
+    if (electionId) {
+      fetchElectionData();
+    }
+  }, [electionId, toast]);
 
   const handleModalChange = () => {
-    setIsVotePeriodModalOpen(false);
+    setIsElectionEditModalOpen(false);
   };
 
   const handleInputChange = (e: any) => {
@@ -49,7 +75,7 @@ export function VotePeriodModal() {
     }));
   };
 
-  const handleSubmit = async () => {
+  const handleEditSubmit = async () => {
     setIsLoading(true);
     try {
       if (!formData.name || !formData.fromDate || !formData.toDate) {
@@ -84,62 +110,62 @@ export function VotePeriodModal() {
       const existingElections = snapshot.val();
   
       if (existingElections) {
-        // Check for date collisions with existing elections
+        // Check for date collisions with existing elections, excluding the current election
         for (let key in existingElections) {
-          const election = existingElections[key];
-          const existingFromDate = new Date(election.fromDate).getTime();
-          const existingToDate = new Date(election.toDate).getTime();
+          if (key !== electionId) { // Exclude the election being edited
+            const election = existingElections[key];
+            const existingFromDate = new Date(election.fromDate).getTime();
+            const existingToDate = new Date(election.toDate).getTime();
   
-          // Check if the new election period overlaps with any existing election period
-          if (
-            (fromDate >= existingFromDate && fromDate <= existingToDate) || // New election starts during another election
-            (toDate >= existingFromDate && toDate <= existingToDate) || // New election ends during another election
-            (fromDate <= existingFromDate && toDate >= existingToDate) // New election fully encompasses an existing election
-          ) {
-            toast({
-              title: "Error",
-              description: "The selected time period overlaps with another election.",
-              className: "bg-white",
-            });
-            setIsLoading(false);
-            return;
+            // Check if the new election period overlaps with any other election period
+            if (
+              (fromDate >= existingFromDate && fromDate <= existingToDate) || // Edited election starts during another election
+              (toDate >= existingFromDate && toDate <= existingToDate) || // Edited election ends during another election
+              (fromDate <= existingFromDate && toDate >= existingToDate) // Edited election fully encompasses an existing election
+            ) {
+              toast({
+                title: "Error",
+                description: "The selected time period overlaps with another election.",
+                className: "bg-white",
+              });
+              setIsLoading(false);
+              return;
+            }
           }
         }
       }
   
-      const id = uuidv4();
-      const newElectionRef = ref(database, `/elections/${id}`);
-      const currentDate = new Date();
-  
-      await set(newElectionRef, {
-        id: id,
+      // Proceed with updating the election
+      const electionRef = ref(database, `/elections/${electionId}`);
+      await update(electionRef, {
         name: formData.name,
         fromDate: formData.fromDate.toISOString(),
         toDate: formData.toDate.toISOString(),
-        createdDate: `${currentDate.getDate()}/${currentDate.getMonth() + 1}/${currentDate.getFullYear()}, ${currentDate.getHours()}:${currentDate.getMinutes()} ${currentDate.getHours() >= 12 ? "PM" : "AM"}`,
-      });
-      setFormData((prevState) => ({
-        ...prevState, 
-        name: "" 
-      }));
-      setIsVotePeriodModalOpen(false);
-      toast({
-        title: "Success",
-        description: "Election saved successfully",
-        className: "bg-white",
       });
   
+      setFormData((prevState) => ({
+        ...prevState,
+        name: "",
+      }));
+      setIsElectionEditModalOpen(false);
+  
+      toast({
+        title: "Success",
+        description: "Election updated successfully",
+        className: "bg-white",
+      });
     } catch (error) {
-      console.error("Error storing form data: ", error);
+      console.error("Error updating election: ", error);
       toast({
         title: "Error",
-        description: "Failed to save election",
+        description: "Failed to update election",
         className: "bg-white",
       });
     } finally {
       setIsLoading(false);
     }
   };
+  
 
   const disabledPastDates = (date: any) => {
     const now = new Date();
@@ -148,12 +174,12 @@ export function VotePeriodModal() {
   };
 
   return (
-    <Dialog onOpenChange={handleModalChange} open={isVotePeriodModalOpen}>
+    <Dialog onOpenChange={handleModalChange} open={isElectionEditModalOpen}>
       <DialogContent className="sm:max-w-[425px] bg-white">
         <DialogHeader>
-          <DialogTitle>Add New Vote</DialogTitle>
+          <DialogTitle>Edit Vote</DialogTitle>
           <DialogDescription>
-            You can add a new vote period here. Click save when you are done.
+            You can edit the vote period here. Click save when you are done.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -179,7 +205,7 @@ export function VotePeriodModal() {
               format="MM/dd/yyyy hh:mm aa"
               showMeridian
               placement="topStart"
-              defaultValue={formData.fromDate}
+              value={formData.fromDate}
               disabledDate={disabledPastDates}
               onChange={(value) => handleDateChange(value, "fromDate")}
             />
@@ -194,15 +220,15 @@ export function VotePeriodModal() {
               format="MM/dd/yyyy hh:mm aa"
               showMeridian
               placement="topStart"
-              defaultValue={formData.toDate}
+              value={formData.toDate}
               disabledDate={disabledPastDates}
               onChange={(value) => handleDateChange(value, "toDate")}
             />
           </div>
         </div>
         <DialogFooter>
-          <Button disabled={isLoading} type="submit" onClick={handleSubmit}>
-            Create
+          <Button disabled={isLoading} type="submit" onClick={handleEditSubmit}>
+            Save Changes
           </Button>
         </DialogFooter>
       </DialogContent>

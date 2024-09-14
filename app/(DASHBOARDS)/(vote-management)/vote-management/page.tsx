@@ -19,30 +19,10 @@ function VoteManagement() {
         const electionsRef = ref(database, "/elections/");
         onValue(electionsRef, async (snapshot) => {
           const elections = snapshot.val();
-    
-          if (!elections) {
-            return;
-          }
+          if (!elections) return;
     
           const electionArray = Object.values(elections);
-          const parseDate = (dateStr: string): Date => {
-            const [datePart, timePart] = dateStr.split(' , ');
-            const [month, day, year] = datePart.split('/').map(Number);
-            const [time, period] = timePart.split(' ');
-            const [hour, minute] = time.split(':').map(Number);
-            
-            let hour24 = hour;
-            if (period === 'PM' && hour < 12) hour24 = hour + 12;
-            if (period === 'AM' && hour === 12) hour24 = 0;
-    
-            return new Date(year, month - 1, day, hour24, minute);
-          };
-    
-          electionArray.sort((a: any, b: any) => {
-            const dateA = parseDate(a.createdDate);
-            const dateB = parseDate(b.createdDate);
-            return dateB.getTime() - dateA.getTime(); 
-          });
+          const currentDate = new Date();  // Get the current date
     
           const electionPromises = electionArray.map(async (election: any) => {
             const electionId = election.id;
@@ -52,30 +32,27 @@ function VoteManagement() {
             ) as any;
             const votes = votesSnapshot.val();
     
-            if (!votes) {
-              return {
-                ...election,
-                totalVotes: 0,
-                top3Users: [],
-              };
-            }
+            const totalVotes = votes ? Object.values(votes).length : 0;
     
+            // Use the ISO dates directly for comparison
+            const startDate = new Date(election.fromDate);  // assuming fromDate is in ISO format
+            const endDate = new Date(election.toDate);  // assuming toDate is in ISO format
+            const isActive = currentDate >= startDate && currentDate <= endDate;
+    
+            // Get top 3 users
             const voteCounts: Record<string, number> = {};
-    
-            Object.values(votes).forEach((vote: any) => {
-              const votedUserId = vote?.votedUserId;
-              if (votedUserId) {
-                if (voteCounts[votedUserId]) {
-                  voteCounts[votedUserId]++;
-                } else {
-                  voteCounts[votedUserId] = 1;
+            if (votes) {
+              Object.values(votes).forEach((vote: any) => {
+                const votedUserId = vote?.votedUserId;
+                if (votedUserId) {
+                  voteCounts[votedUserId] = (voteCounts[votedUserId] || 0) + 1;
                 }
-              }
-            });
+              });
+            }
     
             const top3UsersWithNames = await Promise.all(
               Object.entries(voteCounts)
-                .sort(([, votesA], [, votesB]) => votesB - votesA) 
+                .sort(([, votesA], [, votesB]) => votesB - votesA)
                 .slice(0, 3)
                 .map(async ([userId, votes]) => {
                   const userRef = ref(database, `/users/${userId}`);
@@ -83,7 +60,7 @@ function VoteManagement() {
                     onValue(userRef, resolve)
                   ) as any;
                   const user = userSnapshot.val();
-                  
+    
                   return {
                     userId,
                     votes,
@@ -94,8 +71,9 @@ function VoteManagement() {
     
             return {
               ...election,
-              totalVotes: Object.values(votes).length,
+              totalVotes,
               top3Users: top3UsersWithNames,
+              isActive,  // Correct isActive flag calculation
             };
           });
     
@@ -107,7 +85,6 @@ function VoteManagement() {
         console.error("Error retrieving elections with votes: ", error);
       }
     };
-    
     
   
     useEffect(()=>{
@@ -136,9 +113,13 @@ function VoteManagement() {
       </div>
       <div className="w-full flex flex-col gap-2">
         {electionsData?.map((election,index)=>(
-          <VoteMgtCard election={election} key={index}/>
+          <VoteMgtCard election={election} key={index} isActive={election.isActive} getAllElectionsWithVotes={getAllElectionsWithVotes}/>
         ))}
-        
+        {electionsData.length <= 0 && (
+          <div className="w-full flex justify-center items-center">
+            <h1>No Elections</h1>
+          </div>
+        )}
       </div>
     </div>
   );

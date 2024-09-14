@@ -54,24 +54,38 @@ function Dashboard() {
       const electionsRef = ref(database, "/elections/");
       const electionsSnapshot = await get(electionsRef);
       const electionsData = electionsSnapshot.val();
+  
+      if (!electionsData) {
+        console.error("No elections found");
+        return;
+      }
+  
+      // Get the current date
+      const currentDate = new Date();
+  
+      // Find the election where the current time is between fromDate and toDate
       const activeElection = Object.values(electionsData).find(
-        (election: any) => election.isActive === true
+        (election: any) => {
+          const fromDate = new Date(election.fromDate);
+          const toDate = new Date(election.toDate);
+          return currentDate >= fromDate && currentDate <= toDate;
+        }
       ) as any;
   
       if (!activeElection) {
         console.error("No active election found");
         return;
       }
+  
       const votesRef = ref(database, `/votes/${activeElection.id}`);
       const votesSnapshot = await get(votesRef);
       const votesData = votesSnapshot.val();
-
+  
       if (votesData) {
+        // Count only votes with both votedUserId and voterId
         const validVotes = Object.values(votesData).filter(
           (vote: any) => vote.votedUserId && vote.voterId
         );
-        console.log(validVotes.length);
-        
         setTotalVotes(validVotes.length);
       } else {
         setTotalVotes(0);
@@ -80,6 +94,7 @@ function Dashboard() {
       console.error("Error fetching votes: ", error);
     }
   };
+  
   
 
   const calculatePercentageChange = (current: number, previous: number) => {

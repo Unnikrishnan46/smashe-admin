@@ -9,7 +9,11 @@ export const votePeriodStore = create<any>((set: any) => ({
 
   export const alertStore = create<any>((set: any) => ({
     isDeleteAlertOpen: false,
+    isElectionDeleteAlertOpen:false,
+    electionId:"",
     setIsDeleteAlertOpen: (isOpen: boolean) => set({ isDeleteAlertOpen: isOpen }),
+    setIsElectionDeleteAlertOpen: (isOpen: boolean) => set({ isElectionDeleteAlertOpen: isOpen }),
+    setElectionId: (id: string) => set({ electionId: id }),
   }));
 
   export const sheetStore = create<any>((set: any) => ({
@@ -26,3 +30,11 @@ export const votePeriodStore = create<any>((set: any) => ({
     searchInput: '',
     setSearchInput: (input: string) => set({ searchInput: input }),
   }));
+
+  export const editElectionStore = create<any>((set: any) => ({
+    editElectionId:"",
+    isElectionEditModalOpen:false,
+    setEditElectionId: (id: string) => set({ editElectionId: id }),
+    setIsElectionEditModalOpen: (isOpen: boolean) => set({ isElectionEditModalOpen: isOpen }),
+  }));
+
