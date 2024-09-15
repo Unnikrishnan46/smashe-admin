@@ -19,7 +19,7 @@ function MainRecentVotes({ topFive }: any) {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {topFive?.map((item:any, index:any) => (
+          {topFive.slice(0,5)?.map((item:any, index:any) => (
             <div key={index} className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <Avatar>

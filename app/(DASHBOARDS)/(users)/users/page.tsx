@@ -11,13 +11,14 @@ import {
 import { database } from "@/firebase/firebase.config";
 import { poppins } from "@/utils/fonts";
 import { get, onValue, ref } from "firebase/database";
-import { MessageCircleMoreIcon, Trash2, Undo } from "lucide-react";
+import { MessageCircleMoreIcon, Trash2, Undo, UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { DeleteAlert } from "@/components/custom/DeleteAlert";
-import { alertStore, sheetStore, useSearchStore } from "@/store";
+import { alertStore, sheetStore, useCreateUserStore, useSearchStore } from "@/store";
 import { CommentsSheet } from "@/components/custom/CommentsSheet";
 import * as XLSX from "xlsx";
+import CreateUserModal from "@/components/custom/CreateUserModal";
 
 const UserPage = () => {
   const [allUsers, setAllUsers] = useState<any[]>([]);
@@ -28,6 +29,8 @@ const UserPage = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [comments,setComments] = useState<any>([]);
   const {searchInput,setSearchInput} = useSearchStore();
+  const { setIsCreateUserModalOpen } =
+  useCreateUserStore();
 
   const getAllUsersWithAllTimeVotes = () => {
     try {
@@ -108,12 +111,15 @@ const UserPage = () => {
         toast({
           title: "Success",
           description: `User ${user.userId} has been banned and their comments deleted.`,
+          className:"bg-white"
         });
+        setIsDeleteAlertOpen(false);
       } else {
         const errorData = await response.json();
         toast({
           title: "Error",
           description: `Failed to ban user: ${errorData.error}`,
+          className:"bg-white"
         });
       }
     } catch (error) {
@@ -121,6 +127,7 @@ const UserPage = () => {
       toast({
         title: "Error",
         description: "Something went wrong. Please try again.",
+        className:"bg-white"
       });
     }
   };
@@ -140,12 +147,14 @@ const UserPage = () => {
         toast({
           title: "Success",
           description: `User ${user.userId} has been unbanned successfully.`,
+          className:"bg-white"
         });
       } else {
         const errorData = await response.json();
         toast({
           title: "Error",
           description: `Failed to unban user: ${errorData.error}`,
+          className:"bg-white"
         });
       }
     } catch (error) {
@@ -153,6 +162,7 @@ const UserPage = () => {
       toast({
         title: "Error",
         description: "Something went wrong. Please try again.",
+        className:"bg-white"
       });
     }
   };
@@ -232,6 +242,10 @@ const UserPage = () => {
     XLSX.writeFile(workbook, "Users_List.xlsx");
   };
 
+  const createUserBtnClick = ()=>{
+    setIsCreateUserModalOpen(true);
+  }
+
   useEffect(() => {
     getAllUsersWithAllTimeVotes();
   }, []);
@@ -247,10 +261,11 @@ const UserPage = () => {
 
   return (
     <div className="flex h-screen p-8 flex-col">
-      <div className="flex w-full justify-end">
+      <div className="flex w-full justify-end gap-4 items-center">
+        <Button onClick={createUserBtnClick} className="rounded-full bg-violet-500 hover:bg-violet-300 hover:text-black" size={"icon"}><UserPlus size={18}/></Button>
         <Button onClick={downloadExcel}>Dowmload</Button>
       </div>
-      <div className="w-full overflow-x-scroll">
+      <div className="w-full max-md:overflow-x-scroll">
       <Table className="w-full min-w-[814px]">
         <TableHeader className="w-full">
           <TableRow className="w-full whitespace-nowrap">
@@ -392,6 +407,7 @@ const UserPage = () => {
         deleteUser={deleteUser}
       />
       <CommentsSheet selectedUser={selectedUser} setSelectedUser={setSelectedUser} comments={comments} deleteComment={deleteComment}/>
+      <CreateUserModal/>
     </div>
   );
 };

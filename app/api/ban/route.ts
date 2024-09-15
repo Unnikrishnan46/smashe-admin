@@ -25,7 +25,7 @@ export async function DELETE(request: Request) {
     }
 
     // 1. Disable the user in Firebase Authentication
-    await adminAuth.updateUser(userId, { disabled: true });
+    // await adminAuth.updateUser(userId, { disabled: true });
 
     // 2. Delete user data from the Realtime Database
     const userRef = adminDb.ref(`users/${userId}`);

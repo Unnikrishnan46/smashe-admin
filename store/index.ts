@@ -38,3 +38,8 @@ export const votePeriodStore = create<any>((set: any) => ({
     setIsElectionEditModalOpen: (isOpen: boolean) => set({ isElectionEditModalOpen: isOpen }),
   }));
 
+
+  export const useCreateUserStore = create<any>((set: any) => ({
+    isCreateUserModalOpen:false,
+    setIsCreateUserModalOpen: (isOpen: boolean) => set({ isCreateUserModalOpen: isOpen }),
+  }));
