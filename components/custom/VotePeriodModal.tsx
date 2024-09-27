@@ -16,7 +16,7 @@ import { DatePicker } from "rsuite";
 import "./style.css";
 import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from "uuid";
-import { get, ref, set, update } from "firebase/database";
+import { get, ref, set } from "firebase/database";
 import { database } from "@/firebase/firebase.config";
 import { getCurrentDayDetails } from "@/utils/currentTime";
 
@@ -151,7 +151,7 @@ export function VotePeriodModal() {
     <Dialog onOpenChange={handleModalChange} open={isVotePeriodModalOpen}>
       <DialogContent className="sm:max-w-[425px] bg-white">
         <DialogHeader>
-          <DialogTitle>Add New Vote</DialogTitle>
+          <DialogTitle>Add New Good Election</DialogTitle>
           <DialogDescription>
             You can add a new vote period here. Click save when you are done.
           </DialogDescription>

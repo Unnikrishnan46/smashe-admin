@@ -11,7 +11,7 @@ import * as XLSX from "xlsx";
 
 
 function VoteManagement() {
-    const {setIsVotePeriodModalOpen} = votePeriodStore();
+    const {setIsVotePeriodModalOpen,setIsNewEvilElectionOpen} = votePeriodStore();
     const [electionsData, setElectionsData] = useState<any[]>([]);
     
     const getAllElectionsWithVotes = async () => {
@@ -108,7 +108,8 @@ function VoteManagement() {
        <h1>Total : {electionsData?.length}</h1> 
        <div className="flex items-center gap-3">
         <Button onClick={handleDownload}>Download</Button>
-        <Button onClick={()=>{setIsVotePeriodModalOpen(true)}} className="bg-pink-500">New Vote</Button>
+        <Button onClick={()=>{setIsVotePeriodModalOpen(true)}} className="bg-blue-500">New Good Election</Button>
+        <Button onClick={()=>{setIsNewEvilElectionOpen(true)}} className="bg-red-500">New Evil Election</Button>
        </div>
       </div>
       <div className="w-full flex flex-col gap-2">

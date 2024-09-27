@@ -1,5 +1,6 @@
 "use client"
 
+import NewEvilElectionModal from "@/components/custom/NewEvilElectionModal";
 import { VotePeriodModal } from "@/components/custom/VotePeriodModal";
 
 const VoteLayout = ({ children }: { children: React.ReactNode }) => {
@@ -8,6 +9,7 @@ const VoteLayout = ({ children }: { children: React.ReactNode }) => {
     <main className="h-full">
       {children}
       <VotePeriodModal/>
+      <NewEvilElectionModal/>
     </main>
   );
 };

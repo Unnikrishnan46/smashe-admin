@@ -4,7 +4,9 @@ import { create } from "zustand";
 
 export const votePeriodStore = create<any>((set: any) => ({
     isVotePeriodModalOpen: false,
+    isNewEvilElectionOpen:false,
     setIsVotePeriodModalOpen: (isOpen: boolean) => set({ isVotePeriodModalOpen: isOpen }),
+    setIsNewEvilElectionOpen: (isOpen: boolean) => set({ isNewEvilElectionOpen: isOpen }),
   }));
 
   export const alertStore = create<any>((set: any) => ({

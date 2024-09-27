@@ -85,7 +85,7 @@ function VoteMgtCard({ election, isActive,getAllElectionsWithVotes }: props) {
   };
 
   return (
-    <Card className="w-full h-full p-4 px-8">
+    <Card className={`w-full h-full p-4 px-8 ${election?.electionMode === "evil" ? "bg-red-100" : "bg-white"}`}>
       <CardContent className="w-full h-full p-0">
         <div className="w-full h-full flex items-center justify-between max-md:flex-col max-md:items-start max-md:gap-4">
           <div className="h-full flex flex-col gap-3">
