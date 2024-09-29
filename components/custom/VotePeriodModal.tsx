@@ -16,7 +16,7 @@ import { DatePicker } from "rsuite";
 import "./style.css";
 import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from "uuid";
-import { get, ref, set } from "firebase/database";
+import { equalTo, get, orderByChild, query, ref, set } from "firebase/database";
 import { database } from "@/firebase/firebase.config";
 import { getCurrentDayDetails } from "@/utils/currentTime";
 
@@ -78,9 +78,10 @@ export function VotePeriodModal() {
   
       // Get reference to elections collection
       const electionsRef = ref(database, "/elections");
+      const goodElectionsQuery = query(electionsRef, orderByChild("electionMode"), equalTo("good"));
   
       // Fetch existing elections
-      const snapshot = await get(electionsRef);
+      const snapshot = await get(goodElectionsQuery);
       const existingElections = snapshot.val();
   
       if (existingElections) {
@@ -116,6 +117,7 @@ export function VotePeriodModal() {
         name: formData.name,
         fromDate: formData.fromDate.toISOString(),
         toDate: formData.toDate.toISOString(),
+        electionMode:"good",
         createdDate: `${currentDate.getDate()}/${currentDate.getMonth() + 1}/${currentDate.getFullYear()}, ${currentDate.getHours()}:${currentDate.getMinutes()} ${currentDate.getHours() >= 12 ? "PM" : "AM"}`,
       });
       setFormData((prevState) => ({

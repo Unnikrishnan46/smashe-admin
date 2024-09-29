@@ -16,7 +16,7 @@ import { Input } from "../ui/input";
 import { DatePicker } from "rsuite";
 import "./style.css";
 import { useToast } from "@/hooks/use-toast";
-import { get, ref, set } from "firebase/database";
+import { equalTo, get, orderByChild, query, ref, set } from "firebase/database";
 import { database } from "@/firebase/firebase.config";
 import { v4 as uuidv4 } from "uuid";
 
@@ -80,9 +80,9 @@ function NewEvilElectionModal() {
       
           // Get reference to elections collection
           const electionsRef = ref(database, "/elections");
-      
+          const evilElectionsQuery = query(electionsRef, orderByChild("electionMode"), equalTo("evil"));
           // Fetch existing elections
-          const snapshot = await get(electionsRef);
+          const snapshot = await get(evilElectionsQuery);
           const existingElections = snapshot.val();
       
           if (existingElections) {
