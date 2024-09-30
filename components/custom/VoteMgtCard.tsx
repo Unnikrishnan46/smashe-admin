@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { imfell400 } from "@/utils/fonts";
+import { imfell400, poppinsNormal } from "@/utils/fonts";
 import {
   Accordion,
   AccordionContent,
@@ -90,7 +90,7 @@ function VoteMgtCard({ election, isActive,getAllElectionsWithVotes }: props) {
         <div className="w-full h-full flex items-center justify-between max-md:flex-col max-md:items-start max-md:gap-4">
           <div className="h-full flex flex-col gap-3">
             <h1 className={`text-lg font-medium ${imfell400.className}`}>
-              {election?.name}
+              {election?.name} <Badge className={`${election?.electionMode === "evil" ? "bg-red-500" : "bg-green-500"} ${poppinsNormal?.className}`}>{election?.electionMode === "evil" ? "Evil" : "Good"}</Badge>
             </h1>
             <p className="text-muted-foreground text-sm">
               {formattedFromDate} to {formattedToDate}
